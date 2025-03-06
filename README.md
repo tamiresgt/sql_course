@@ -1,7 +1,7 @@
 # SQL_Course
 This repository was created in order to document the learnings of the SQL Impressionator course conducted by Hashtag Treinamentos.
 
-## Tópicos abordados
+## Modules Description
 ✅ Module 1 - Introduction  
 ✅ Module 2 - Order and Filters  
 ✅ Module 3 - Aggregate Function  
