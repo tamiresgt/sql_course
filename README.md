@@ -10,8 +10,8 @@ This repository was created in order to document the learnings of the SQL Impres
 ✅ Module 6 - Groups + Joins  
 ✅ Module 7 - Variables  
 ✅ Module 8 - Strings and Date  
-🔘 Module 9 - Conditional functions  
-🔘 Module 10 - SQL Views  
+✅ Module 9 - Conditional functions  
+✅ Module 10 - SQL Views  
 🔘 Module 11 - CRUD  
 🔘 Module 12 - Subqueries e CTE's  
 🔘 Module 13 - Loops  
