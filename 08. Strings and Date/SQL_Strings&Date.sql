@@ -1,4 +1,4 @@
--- Manipulating Strings and Data Exercise 
+-- Manipulating Strings and Data Module 
 -- Functions learned: LEN, DATALENGTH, CONCAT, LEFT, RIGHT, REPLACE, TRANSLATE, STUFF, UPPER, LOWER, FORMAT, CHARINDEX, SUBSTRING, TRIM, LTRIM, RTRIM, 
 -- DAY, MONTH, YEAR, DATEFROMPARTS, GETDATE, SYSDATETIME, DATEPART, DATENAME, DATEADD, DATEIFF
 -- Database: ContosoRetailDW
