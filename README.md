@@ -18,8 +18,8 @@ This repository was created in order to document the learnings of the SQL Impres
 ✅ Module 14 - Window Functions   
 ✅ Module 15 - Regex - Regular Expressions  
 ✅ Module 16 - Constraints  
-🔘 Module 17 - Sequences  
-🔘 Module 18 - Transactions  
+✅ Module 17 - Sequences  
+✅ Module 18 - Transactions  
 🔘 Module 19 - Functions  
 🔘 Module 20 - Procedures  
 🔘 Module 21 - Triggers DML  
