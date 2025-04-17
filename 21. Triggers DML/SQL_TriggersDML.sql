@@ -1,9 +1,6 @@
-﻿-- Functions Module 
--- Functions learned: CREATE FUNCTION, ALTER FUNCTION, DROP FUNCTION 
--- Database: ExercisesFunction
-
-CREATE DATABASE ExerciseFunctions
-USE ExerciseFunctions
+﻿-- Triggers DML Module
+-- Functions learned: TRIGGER DML, DML - AFTER, INSERTED, DELETED, INSTEAD OF, DISABLE, DROP
+-- Database: ExercisesTriggers
 
 -- Table 1: dClient where:
 -- Column 1: id_client INT -> PrimaryKey and identity
@@ -12,6 +9,9 @@ USE ExerciseFunctions
 -- Column 4: birthdate DATE -> NOT NULL
 -- Column 5: cpf VARCHAR -> NOT NULL and no duplicate
 
+CREATE DATABASE ExercisesTriggers
+
+USE ExercisesTriggers
 CREATE TABLE dClient (
 	id_client INT IDENTITY(1,1),
 	NameClient VARCHAR(100) NOT NULL,
@@ -70,6 +70,7 @@ SELECT * FROM dManager
 -- Column 5: contract_value of type FLOAT --> Does not accept null values ​​and must be greater than zero
 
 
+USE ExercisesConstraints
 CREATE TABLE fContracts (
 	id_contract INT IDENTITY(1,1),
 	date_signature DATE DEFAULT GETDATE(),
@@ -96,91 +97,143 @@ VALUES
 
 SELECT * FROM fContracts
 
+-- TRIGGER DML
+-- Create a Trigger that is fired AFTER an INSERT, UPDATE, DELETE event is executed on the dClient table.
 
--- Imagine you want to format the date of birth column differently with the DATENAME function
+CREATE OR ALTER TRIGGER tgChangedClient 
+ON dClient
+AFTER INSERT , UPDATE, DELETE
+AS
+BEGIN
+	PRINT 'Data Changed'
+END
+
 SELECT * FROM dClient
 
-SELECT
-	NameClient,
-	BirthDate,
-	DATENAME(DW,BirthDate) +','+ -- DW = day week
-	DATENAME(D,BirthDate) +' de '+
-	DATENAME(M,BirthDate) + ' de'+
-	DATENAME(YY, BirthDate)
-FROM dClient
+INSERT INTO dClient(NameClient,Gender,BirthDate,CPF)
+VALUES ('Zacarias Neto', 'M', '13/02/1999', '139.543.189-00')
 
--- How to create a Function? 
+UPDATE dClient
+SET CPF = '130.451.892-10'
+WHERE id_client = 11
 
-CREATE FUNCTION fnFullDate (@Date AS DATE)
-RETURNS VARCHAR(MAX)
+DELETE FROM dClient
+WHERE id_client = 11
+
+-- Table INSERTED and DELETED
+
+-- INSERTED
+CREATE OR ALTER TRIGGER tgChangedClient 
+ON dClient
+AFTER INSERT , UPDATE, DELETE
 AS
 BEGIN
-	RETURN DATENAME(DW, @Date) + ',' + 
-		   DATENAME(D, @Date) + ' de' +
-		   DATENAME(M, @Date) + 'de' +
-		   DATENAME(YY, @Date) 
+	SELECT * FROM inserted
+	-- PRINT 'Data Changed on the table'
 END
 
-SELECT 
-	NameClient,
-	BirthDate,
-	[dbo].[fnFullDate](BirthDate) AS 'FullDate'
-FROM dClient
 
--- CHANGING AND DELETING A FUNCTION
-CREATE OR ALTER FUNCTION fnFullDate (@Date AS DATE)
-RETURNS VARCHAR(MAX)
+INSERT INTO dClient(NameClient,Gender,BirthDate,CPF)
+VALUES ('Zacarias Neto', 'M', '13/02/1999', '139.543.189-00')
+
+
+-- DELETED
+CREATE OR ALTER TRIGGER tgChangedClient 
+ON dClient
+AFTER INSERT , UPDATE, DELETE
 AS
 BEGIN
-	RETURN DATENAME(DW, @Date) + ',' + 
-		   DATENAME(D, @Date) + ' de' +
-		   DATENAME(M, @Date) + 'de' +
-		   DATENAME(YY, @Date) + ' - ' +
-		   CASE
-			   WHEN MONTH(@Date) <= 6 THEN '(1º Semester)'
-			   ELSE '(2º Semester)'
-		   END
+	SELECT * FROM deleted
+	-- PRINT 'Data Changed on the table'
 END
 
-SELECT 
-	NameClient,
-	BirthDate,
-	[dbo].[fnFullDate](BirthDate) AS 'FullDate'
-FROM dClient
+DELETE FROM dClient
+WHERE id_client = 12
 
-DROP FUNCTION fnFullDate
-
--- Create a Function to return the first name of each manager
-
-SELECT * FROM dManager
-
-SELECT
-	name_manager,
-	LEFT(name_manager,CHARINDEX(' ',name_manager) - 1) AS 'FirstName'
-FROM dManager
-
-INSERT INTO dManager(name_manager,hiring_date,salary)
-VALUES ('João', '10/01/2019', 3100)
-
--- Function:
-
-CREATE OR ALTER FUNCTION fnFirstName (@FullName AS VARCHAR(MAX))
-RETURNS VARCHAR(MAX)
+-- UPDATED -> do not exist
+CREATE OR ALTER TRIGGER tgChangedClient 
+ON dClient
+AFTER INSERT , UPDATE, DELETE
 AS
 BEGIN
-	DECLARE @PositionSpace AS INT
-	DECLARE @Answer AS VARCHAR(MAX)
-
-	SET @PositionSpace = CHARINDEX(' ',@FullName)
-
-	IF @PositionSpace = 0 
-		SET @Answer = @FullName
-	ELSE 
-		SET @Answer = LEFT(@FullName,@PositionSpace - 1)
-	RETURN @Answer
+	SELECT * FROM updated
+	-- PRINT 'Data Changed on the table'
 END
 
-SELECT
-	name_manager,
-	dbo.fnFirstName(name_manager) AS 'FirstName'
-FROM dManager
+UPDATE dClient
+SET CPF = '130.451.892-10'
+WHERE id_client = 13
+
+-- Identifying the related dml event in the trigger
+
+CREATE OR ALTER TRIGGER tgChangedClient 
+ON dClient
+AFTER INSERT , UPDATE, DELETE
+AS
+BEGIN
+	IF EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted)
+		PRINT 'Data UPDATED from Table'
+	ELSE IF EXISTS (SELECT * FROM inserted)
+		PRINT 'Data INSERTED from Table'
+	ELSE IF EXISTS (SELECT * FROM deleted)
+		PRINT 'Data DELETED from Table'
+END
+
+-- INSERT
+
+INSERT INTO dClient(NameClient,Gender,BirthDate,CPF)
+VALUES ('Eleanora Batista', 'F', '13/02/2003', '453.543.189-00')
+
+SELECT * FROM dClient
+
+-- DELETE 
+DELETE FROM dClient
+WHERE id_client = 14
+
+-- UPDATE
+UPDATE dClient
+SET CPF = '456.485.896-78'
+WHERE id_client = 1
+
+
+-- CREATE A TRIGGER TO CONTROL REGISTRATION PERMISSIONS - INSTEAD OF
+
+-- Create a trigger that is fired every TIME an INSERT, UPDATE and DELETE is executed on the dClient table.
+-- What should happen: if the registration is on a Saturday or Sunday, you can't let it change because it's outside business hours
+
+CREATE OR ALTER TRIGGER tgRegistrationControl
+ON dClient
+INSTEAD OF INSERT, UPDATE, DELETE 
+AS
+BEGIN
+	IF FORMAT(GETDATE(), 'dddd')  IN ('sábado', 'domingo')
+	BEGIN
+		RAISERROR('Customers can only register from Monday to Friday',1,1)
+		ROLLBACK
+	END
+	ELSE
+	BEGIN
+		INSERT INTO dClient(NameClient,Gender,BirthDate,CPF)
+		SELECT NameClient,Gender,BirthDate,CPF FROM inserted
+	END
+END
+
+SELECT FORMAT(GETDATE(), 'dddd')
+
+INSERT INTO dClient(NameClient,Gender,BirthDate,CPF)
+VALUES ('Pedro Albuquerque', 'M', '13/02/2003', '111.543.189-00')
+
+SELECT * FROM dClient
+
+-- enable or disable a trigger
+
+DISABLE TRIGGER tgChangedClient ON dClient
+
+
+-- enable or disable all triggers
+
+DISABLE TRIGGER ALL ON dClient
+
+-- drop a trigger
+
+DROP TRIGGER tgChangeClient

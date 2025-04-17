@@ -1,9 +1,9 @@
-﻿-- Functions Module 
--- Functions learned: CREATE FUNCTION, ALTER FUNCTION, DROP FUNCTION 
--- Database: ExercisesFunction
+﻿-- Procedures Module
+-- Functions learned: CREATE PROCEDURE, EXECUTE
+-- Database: ExerciseProcedures
 
-CREATE DATABASE ExerciseFunctions
-USE ExerciseFunctions
+CREATE DATABASE ExerciseProcedures
+USE ExerciseProcedures
 
 -- Table 1: dClient where:
 -- Column 1: id_client INT -> PrimaryKey and identity
@@ -96,91 +96,100 @@ VALUES
 
 SELECT * FROM fContracts
 
+-- PROCEDURE WITHOUT PARAMETERS
 
--- Imagine you want to format the date of birth column differently with the DATENAME function
+CREATE PROCEDURE prOrderManagerbySalary
+AS
+BEGIN
+	SELECT 
+		id_manager,
+		name_manager,
+		salary
+	FROM dManager
+	ORDER BY salary DESC
+END
+
+EXECUTE prOrderManagerbySalary
+
+-- PROCEDURES WITH ONE PARAMETER
+-- Create a procedure that returns the clients when we select a gender
+
 SELECT * FROM dClient
 
-SELECT
-	NameClient,
-	BirthDate,
-	DATENAME(DW,BirthDate) +','+ -- DW = day week
-	DATENAME(D,BirthDate) +' de '+
-	DATENAME(M,BirthDate) + ' de'+
-	DATENAME(YY, BirthDate)
-FROM dClient
-
--- How to create a Function? 
-
-CREATE FUNCTION fnFullDate (@Date AS DATE)
-RETURNS VARCHAR(MAX)
+CREATE OR ALTER PROCEDURE prClientsbyGerder (@Gender VARCHAR(MAX))
 AS
 BEGIN
-	RETURN DATENAME(DW, @Date) + ',' + 
-		   DATENAME(D, @Date) + ' de' +
-		   DATENAME(M, @Date) + 'de' +
-		   DATENAME(YY, @Date) 
+	SELECT *
+	FROM dClient
+	WHERE Gender = @Gender
 END
 
-SELECT 
-	NameClient,
-	BirthDate,
-	[dbo].[fnFullDate](BirthDate) AS 'FullDate'
-FROM dClient
+EXECUTE prClientsbyGerder 'M'
 
--- CHANGING AND DELETING A FUNCTION
-CREATE OR ALTER FUNCTION fnFullDate (@Date AS DATE)
-RETURNS VARCHAR(MAX)
+
+-- PROCEDURES WITH MORE THAN ONE PARAMETERS
+-- Create a procedure to select information from the dClients table with the gender and date of birth entered 
+
+CREATE OR ALTER PROCEDURE prClientsbyGenderBirthDate (@gender VARCHAR(MAX), @BirthYear INT)
 AS
 BEGIN
-	RETURN DATENAME(DW, @Date) + ',' + 
-		   DATENAME(D, @Date) + ' de' +
-		   DATENAME(M, @Date) + 'de' +
-		   DATENAME(YY, @Date) + ' - ' +
-		   CASE
-			   WHEN MONTH(@Date) <= 6 THEN '(1º Semester)'
-			   ELSE '(2º Semester)'
-		   END
+	SELECT *
+	FROM dClient
+	WHERE Gender = @gender AND YEAR(BirthDate) = @BirthYear
 END
 
-SELECT 
-	NameClient,
-	BirthDate,
-	[dbo].[fnFullDate](BirthDate) AS 'FullDate'
-FROM dClient
+EXECUTE prClientsbyGenderBirthDate 'M' , 1989
 
-DROP FUNCTION fnFullDate
+-- Creating a procedure with DEFAULT parameters
+-- Create a procedure to select information from the dClients table with the gender and date of birth entered 
 
--- Create a Function to return the first name of each manager
-
-SELECT * FROM dManager
-
-SELECT
-	name_manager,
-	LEFT(name_manager,CHARINDEX(' ',name_manager) - 1) AS 'FirstName'
-FROM dManager
-
-INSERT INTO dManager(name_manager,hiring_date,salary)
-VALUES ('João', '10/01/2019', 3100)
-
--- Function:
-
-CREATE OR ALTER FUNCTION fnFirstName (@FullName AS VARCHAR(MAX))
-RETURNS VARCHAR(MAX)
+CREATE OR ALTER PROCEDURE prClientsbyGenderBirthDate (@gender VARCHAR(MAX) = 'M', @BirthYear INT)
 AS
 BEGIN
-	DECLARE @PositionSpace AS INT
-	DECLARE @Answer AS VARCHAR(MAX)
-
-	SET @PositionSpace = CHARINDEX(' ',@FullName)
-
-	IF @PositionSpace = 0 
-		SET @Answer = @FullName
-	ELSE 
-		SET @Answer = LEFT(@FullName,@PositionSpace - 1)
-	RETURN @Answer
+	SELECT *
+	FROM dClient
+	WHERE Gender = @gender AND YEAR(BirthDate) = @BirthYear
 END
 
-SELECT
-	name_manager,
-	dbo.fnFirstName(name_manager) AS 'FirstName'
-FROM dManager
+EXECUTE prClientsbyGenderBirthDate @gender = 'M'  , @BirthYear = 1989
+EXECUTE prClientsbyGenderBirthDate @BirthYear = 1989
+
+-- Create a procedure to register a new contract signature in the fContracts table with the parameters:
+-- Manager: Lucas Sampaio
+-- Client: Gustavo Barbosa
+-- Contract value: 5000
+
+-- Step 1: Define the variables to be used
+-- Step 2: Store the value of id_manager according to the associated manager
+-- Step 3: Store the customer_id value according to the customer name
+-- Step 4: Set the contract signing date to the current date in the system
+-- Step 5: Use INSERT INTO to insert the data into the fContracts table
+
+CREATE OR ALTER PROCEDURE prContractRegister (@NameManager VARCHAR(MAX), @NameClient VARCHAR(MAX), @ContractValue FLOAT)
+AS
+BEGIN
+	DECLARE @idManager INT
+	DECLARE @idClient INT
+	
+	SELECT
+		@idManager = id_manager
+	FROM dManager
+	WHERE name_manager = @NameManager
+
+	SELECT
+		@idClient = id_client
+	FROM dClient
+	WHERE NameClient = @NameClient
+
+	INSERT INTO fContracts (date_signature, id_client, id_manager, contract_value)
+	VALUES (GETDATE(), @idClient, @idManager, @ContractValue)
+
+	PRINT 'Contract successfully registered'
+END
+
+EXECUTE prContractRegister @NameManager = 'Lucas Sampaio', @NameClient = 'Gustavo Barbosa', @ContractValue = 5000
+
+SELECT * FROM fContracts
+
+DROP PROCEDURE prContractRegister
+
